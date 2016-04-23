@@ -1,0 +1,22 @@
+{
+    "appKeys": {
+        "hello_msg": 1
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "zhaoliangjin27@163.com",
+    "longName": "hellohello",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "2",
+    "shortName": "hellohello",
+    "uuid": "137b81e9-f90e-4e44-9da9-829a487809ea",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
