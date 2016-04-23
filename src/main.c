@@ -11,6 +11,11 @@ static TextLayer *distance_layer;
 
 //global variable
 static char msg[100];
+static AppTimer *timer; // global variable to represent the timer
+int sleeptime = 1000;
+int isC;
+int con_timer = 1;
+int choice;
 
 void out_sent_handler(DictionaryIterator *sent, void *context) {
   // outgoing message was delivered — do nothing
@@ -41,6 +46,30 @@ void in_dropped_handler(AppMessageResult reason, void *context) {
 text_layer_set_text(temperature_layer, "Error in!");
 }
 
+static void timer_callback(void *data) { 
+  // this function is called by the timer when it wakes up
+  DictionaryIterator *iter; 
+  app_message_outbox_begin(&iter);
+  int key = 1;
+  char ms[100];
+
+  // send the message "hello?" to the phone, using key #0 
+  if(choice == 0){
+    if (isC == 1) strcpy(ms,"Celsius");
+    else strcpy(ms,"Farenheit");
+    }
+  else if(choice==1){
+    strcpy(ms,"Distance");
+  }
+  else{
+    strcpy(ms,"Time");
+  }
+  Tuplet value = TupletCString(key, &ms[0]);
+  dict_write_tuplet(iter, &value); 
+  app_message_outbox_send();
+  if(con_timer == 1) timer = app_timer_register(sleeptime, timer_callback, NULL);
+}
+
 void distance_select_click_handler(ClickRecognizerRef recognizer, void *context) {
 DictionaryIterator *iter; 
 app_message_outbox_begin(&iter);
@@ -54,27 +83,34 @@ app_message_outbox_send();
 
 /* This is called when the select button is clicked */
 void temperature_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-DictionaryIterator *iter; 
-app_message_outbox_begin(&iter);
-int key = 1;
-// send the message "hello?" to the phone, using key #0 
-Tuplet value = TupletCString(key, "Celsius"); 
-dict_write_tuplet(iter, &value); 
-app_message_outbox_send();
-//text_layer_set_text(hello_layer, "Refresh!"); 
+// DictionaryIterator *iter; 
+// app_message_outbox_begin(&iter);
+// int key = 1;
+// // send the message "hello?" to the phone, using key #0 
+// Tuplet value = TupletCString(key, "Celsius"); 
+// dict_write_tuplet(iter, &value); 
+// app_message_outbox_send();
+// //text_layer_set_text(hello_layer, "Refresh!"); 
+   isC = 1;
+  con_timer = 1;
+  timer_callback(NULL);
 }
 
 void temperature_select_click_handler_up(ClickRecognizerRef recognizer, void *context){
-  DictionaryIterator *iter; 
-  app_message_outbox_begin(&iter);
-  int key = 1;
-  // send the message "hello?" to the phone, using key #0 
-  Tuplet value = TupletCString(key, "Farenheit"); 
-  dict_write_tuplet(iter, &value); 
-  app_message_outbox_send();
+//   DictionaryIterator *iter; 
+//   app_message_outbox_begin(&iter);
+//   int key = 1;
+//   // send the message "hello?" to the phone, using key #0 
+//   Tuplet value = TupletCString(key, "Farenheit"); 
+//   dict_write_tuplet(iter, &value); 
+//   app_message_outbox_send();
+   isC = 0;
+  con_timer = 1;
+  timer_callback(NULL);
 }
 
 void temperature_select_click_handler_down(ClickRecognizerRef recognizer, void *context){
+  con_timer = 0;
   DictionaryIterator *iter; 
   app_message_outbox_begin(&iter);
   int key = 1;
@@ -83,6 +119,12 @@ void temperature_select_click_handler_down(ClickRecognizerRef recognizer, void *
   dict_write_tuplet(iter, &value); 
   app_message_outbox_send();
 }
+
+void temperature_back_click_handler(ClickRecognizerRef recognizer, void *context){
+  con_timer = 0;
+  window_stack_remove(temperature_window, true);
+}
+
 
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer, 
                                       uint16_t section_index, void *context) {
@@ -118,9 +160,11 @@ static void select_callback(struct MenuLayer *menu_layer,
   // Do something in response to the button press
   if((int)cell_index->row==0){
     window_stack_push(temperature_window, true);
+    choice=0;
   }
   else if((int)cell_index->row==1){
     window_stack_push(distance_window,true);
+    choice=1;
   }
    
 }
@@ -130,6 +174,7 @@ void temperature_config_provider(void *context) {
 window_single_click_subscribe(BUTTON_ID_SELECT, temperature_select_click_handler);
 window_single_click_subscribe(BUTTON_ID_UP, temperature_select_click_handler_up);
 window_single_click_subscribe(BUTTON_ID_DOWN, temperature_select_click_handler_down);
+window_single_click_subscribe(BUTTON_ID_BACK, temperature_back_click_handler);  
   
 }
 
